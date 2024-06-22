@@ -1,108 +1,100 @@
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import { Fragment, FC, useState } from 'react';
+
+
+let id = 0
+const makeId = () => ++id
+
+type Status = "todo" | "doing" | "done"
 
 interface Task {
-  id: number;
-  desc: string;
-  status: string;
+  id: number
+  desc: string
+  status: Status
 }
 
-interface TaskItemProps {
-  task: Task;
-  changeStatus: (id: number, status: string) => void;
-  removeTask: (id: number) => void;
+interface BaseTaskProp {
+  onChange: (id: number, status: Status) => void
+  remove: (id: number) => void
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, changeStatus, removeTask }) => (
-  <li key={task.id}>
-    {task.desc}
-    <button onClick={() => changeStatus(task.id, "todo")}>todo</button>
-    <button onClick={() => changeStatus(task.id, "doing")}>doing</button>
-    <button onClick={() => changeStatus(task.id, "done")}>done</button>
-    <button onClick={() => removeTask(task.id)}>remove</button>
-  </li>
-);
+interface TaskItemProps extends BaseTaskProp {
+  task: Task
 
-interface TaskListProps {
-  tasks: Task[];
-  status: string;
-  changeStatus: (id: number, status: string) => void;
-  removeTask: (id: number) => void;
 }
+interface TaskListProps extends BaseTaskProp {
+  tasks: Task[]
+  status: string
+}
+const TaskItem: FC<TaskItemProps> = ({ task, onChange, remove }) => <li>
+  {task.desc}
+  <button onClick={() => onChange(task.id, "todo")}>todo</button>
+  <button onClick={() => onChange(task.id, "doing")}>doing</button>
+  <button onClick={() => onChange(task.id, "done")}>done</button>
+  <button onClick={() => remove(task.id)}>remove</button>
+</li>
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, status, changeStatus, removeTask }) => (
-  <ul>
-    {tasks
-      .filter((t) => t.status === status)
-      .map((task) => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          changeStatus={changeStatus}
-          removeTask={removeTask}
-        />
-      ))}
-  </ul>
-);
+const TaskList: FC<TaskListProps> = ({ tasks, onChange, remove, status }) => <ul>
+  {tasks.filter(t => t.status === status).map(task =>
+    <TaskItem
+      key={task.id}
+      task={task}
+      onChange={onChange}
+      remove={remove} />
+  )}
+</ul>
 
-let id = 0;
-const makeId = () => id++;
-
-const Todo: React.FC = () => {
+const ToDo: FC = () => {
   const [tasks, setTasks] = useState<Task[]>([
     { id: makeId(), desc: "first", status: "todo" },
     { id: makeId(), desc: "second", status: "doing" },
-    { id: makeId(), desc: "third", status: "done" },
-  ]);
-  const [taskInp, setTaskInp] = useState<string>("");
+    { id: makeId(), desc: "third", status: "done" }])
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setTaskInp(event.target.value);
-  };
+  const [taskInp, setTaskInp] = useState("")
 
-  const addTask = (newTask: string) => {
-    setTasks([...tasks, { id: makeId(), desc: newTask, status: "todo" }]);
-    setTaskInp("");
-  };
+  const handlerChange = (event: any) => {
+    setTaskInp(event.target.value)
+  }
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    const newTask = taskInp;
-    if (!newTask) return alert("You must write something!");
-    addTask(newTask);
-  };
+  const addTask = (newTask: any) => {
+    setTasks([...tasks, { id: makeId(), desc: newTask, status: "todo" }])
+  }
 
-  const removeTask = (id: number) => {
-    setTasks(tasks.filter((t) => id !== t.id));
-  };
+  const handlerSubmit = (event: any) => {
+    event.preventDefault()
+    const newTask = taskInp
+    setTaskInp("")
+    if (!newTask)
+      return alert("You must write something!")
+    addTask(newTask)
+  }
 
-  const changeStatus = (id: number, newStatus: string) => {
-    setTasks(
-      tasks.map((task) => {
-        if (task.id !== id) return task;
-        return { ...task, status: newStatus };
-      })
-    );
-  };
+  const onChange = (id: number, newStatus: Status) => {
+    setTasks(tasks.map(task => {
+      if (task.id !== id) return task
+      return { ...task, status: newStatus }
+    }))
+  }
 
-  return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <input value={taskInp} onChange={handleChange} />
-        <input type="submit" value="Add" />
-      </form>
-      {["todo", "doing", "done"].map((status) => (
-        <div key={status}>
-          <h1>{status}</h1>
-          <TaskList
-            tasks={tasks}
-            status={status}
-            changeStatus={changeStatus}
-            removeTask={removeTask}
-          />
-        </div>
-      ))}
-    </div>
-  );
-};
+  const remove = (id: number) => {
+    setTasks(tasks.filter(t => id !== t.id))
+  }
 
-export default Todo;
+  return <>
+    <form onSubmit={handlerSubmit}>
+      <input value={taskInp} onChange={handlerChange} />
+      <input value="add" type="submit" />
+    </form>
+    {(["todo", "doing", "done"] as Status[]).map(status => <Fragment key={status}>
+      <h1>{status}</h1>
+      <TaskList
+        tasks={tasks}
+        onChange={onChange}
+        remove={remove}
+        status={status} />
+    </Fragment>)}
+
+  </>;
+
+}
+
+export default ToDo
